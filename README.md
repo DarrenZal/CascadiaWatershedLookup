@@ -49,7 +49,7 @@ User Input (Address) → Geocoding API → Spatial Lookup → Watershed Result
    cd CascadiaWatershedLookup
    ```
 
-2. **Create virtual environment**
+2. **Create and activate virtual environment**
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -60,14 +60,29 @@ User Input (Address) → Geocoding API → Spatial Lookup → Watershed Result
    pip install -r requirements.txt
    ```
 
-4. **Download watershed dataset** (See [Data Setup](#data-setup))
+4. **Set up environment variables**
+   ```bash
+   # Copy the example .env file (already created)
+   # Edit .env to add your geocoding API key if desired
+   ```
 
-5. **Run the application**
+5. **Create data directory**
+   ```bash
+   mkdir -p data
+   ```
+
+6. **Run the application**
    ```bash
    python app.py
    ```
 
-6. **Open browser** to `http://localhost:5000`
+7. **Open browser** to `http://localhost:5000`
+
+### Current Status
+✅ **Web Application**: Fully functional and running  
+⚠️ **Dataset**: Needs to be created (see [Next Steps](#next-steps) below)
+
+The application will run and serve the web interface, but watershed lookups will return "not found" until the dataset is created.
 
 ## 📊 Data Setup
 
@@ -278,6 +293,54 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Research**: Based on comprehensive technical blueprint in `research.md`
 - **Libraries**: GeoPandas, Shapely, Flask communities
 - **Inspiration**: Cascadia bioregional movement
+
+## 🔄 Next Steps
+
+The web application is fully functional, but requires the watershed dataset to perform actual lookups. Here's what needs to be done in the next session:
+
+### Priority 1: Create Watershed Dataset
+1. **Download Source Data**
+   - US Watershed Boundary Dataset (WBD) from USGS
+   - Canadian hydrographic data from Natural Resources Canada
+   - Cascadia bioregion boundary from WWU
+
+2. **Data Processing Pipeline**
+   - Clip datasets to Cascadia boundary
+   - Harmonize US (HUC) and Canadian (SDAC) schemas
+   - Merge into unified `cascadia_watersheds.gpkg` file
+   - Place in `data/` directory
+
+3. **Detailed Instructions**
+   - Follow the comprehensive data processing steps in `research.md`
+   - See `docs/data-processing.md` for step-by-step ETL pipeline
+
+### Priority 2: Enhanced Features
+- Add map visualization to web interface
+- Implement geocoding result caching
+- Add batch address processing
+- Create data validation and quality checks
+
+### Priority 3: Production Readiness
+- Set up proper logging and monitoring
+- Add rate limiting to API endpoints
+- Configure for cloud deployment (Docker, Heroku, etc.)
+- Add comprehensive test suite
+
+### Development Commands
+```bash
+# Activate virtual environment
+source venv/bin/activate
+
+# Run application
+python app.py
+
+# Run tests (once dataset is available)
+python -m pytest tests/
+
+# Check code quality
+flake8 .
+black .
+```
 
 ## 📚 Additional Resources
 
