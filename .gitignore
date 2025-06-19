@@ -128,15 +128,35 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Project-specific
-data/
-*.gpkg
+# Project-specific data files
+# Exclude large raw data but keep the unified dataset
+data/raw/
+data/processed/
+data/*.zip
+data/*.kml
+# Keep the unified dataset for the project
+!data/cascadia_watersheds.gpkg
+!data/cascadia_watersheds_backup.gpkg
+
+# Large geospatial files (except the main dataset)
 *.shp
 *.shx
 *.dbf
 *.prj
 *.cpg
-*.xml
+# Allow the main dataset
+!cascadia_watersheds.*
+
+# API Keys and secrets
+google-credentials.json
+secrets.json
+.env.local
+.env.production
+
+# Large backup files
+*.gpkg.backup
+*.gpkg.bak
+*_backup.*
 
 # IDE
 .vscode/

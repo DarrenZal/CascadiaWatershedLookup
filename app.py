@@ -42,7 +42,8 @@ init_watershed_service()
 @app.route('/')
 def index():
     """Serve the main web interface."""
-    return render_template('index.html')
+    google_maps_api_key = os.environ.get('GOOGLE_MAPS_API_KEY', '')
+    return render_template('index.html', google_maps_api_key=google_maps_api_key)
 
 @app.route('/api/lookup', methods=['POST'])
 def api_lookup():
@@ -75,12 +76,12 @@ def api_lookup():
                 'message': 'Please provide a valid street address'
             }), 400
         
-        # Get optional API key from environment
-        geocoding_api_key = os.environ.get('GEOCODING_API_KEY')
+        # Get Google Maps API key from environment  
+        google_maps_api_key = os.environ.get('GOOGLE_MAPS_API_KEY')
         
         # Perform watershed lookup
         logger.info(f"Looking up watershed for address: {address}")
-        result = watershed_service.lookup_watershed(address, geocoding_api_key)
+        result = watershed_service.lookup_watershed(address, google_maps_api_key)
         
         if result:
             logger.info(f"Successfully found watershed for: {address}")
@@ -97,6 +98,138 @@ def api_lookup():
     
     except Exception as e:
         logger.error(f"Error in watershed lookup: {e}")
+        return jsonify({
+            'error': 'Internal server error',
+            'message': 'An error occurred while processing your request'
+        }), 500
+
+@app.route('/api/lookup-with-validation', methods=['POST'])
+def api_lookup_with_validation():
+    """
+    Enhanced API endpoint for watershed lookup with address validation and suggestions.
+    
+    Supports both single-line and multi-line address formats.
+    Returns validation results and suggestions for invalid addresses.
+    """
+    try:
+        # Check if service is available
+        if watershed_service is None:
+            return jsonify({
+                'error': 'Watershed service unavailable',
+                'message': 'The watershed dataset is not loaded. Please check the data setup.'
+            }), 503
+        
+        # Get request data
+        data = request.get_json()
+        if not data or 'address' not in data:
+            return jsonify({
+                'error': 'Invalid request',
+                'message': 'Please provide an address in the request body'
+            }), 400
+        
+        address_input = data['address']
+        if not address_input or not address_input.strip():
+            return jsonify({
+                'error': 'Empty address',
+                'message': 'Please provide a valid address'
+            }), 400
+        
+        # Get Google Maps API key from environment  
+        google_maps_api_key = os.environ.get('GOOGLE_MAPS_API_KEY')
+        
+        # Perform enhanced watershed lookup with validation
+        logger.info(f"Looking up watershed with validation for: {address_input[:50]}...")
+        result = watershed_service.lookup_watershed_with_validation(address_input, google_maps_api_key)
+        
+        if result["success"]:
+            logger.info(f"Successfully found watershed with validation")
+            return jsonify({
+                'success': True,
+                'data': result
+            })
+        else:
+            # Address validation failed or no watershed found
+            logger.warning(f"Validation failed or no watershed found")
+            
+            # If we have suggestions, return them with a 422 status (validation error)
+            if result["validation"]["suggestions"]:
+                return jsonify({
+                    'success': False,
+                    'validation_error': True,
+                    'data': result,
+                    'message': 'Address could not be validated. Please try one of the suggested addresses.'
+                }), 422
+            else:
+                return jsonify({
+                    'success': False,
+                    'data': result,
+                    'message': 'Address could not be geocoded or is outside the Cascadia bioregion.'
+                }), 404
+    
+    except Exception as e:
+        logger.error(f"Error in enhanced watershed lookup: {e}")
+        return jsonify({
+            'error': 'Internal server error',
+            'message': 'An error occurred while processing your request'
+        }), 500
+
+@app.route('/api/validate-address', methods=['POST'])
+def api_validate_address():
+    """
+    API endpoint for address validation only (without watershed lookup).
+    
+    Useful for form validation and address correction.
+    """
+    try:
+        # Check if service is available
+        if watershed_service is None:
+            return jsonify({
+                'error': 'Watershed service unavailable',
+                'message': 'The watershed dataset is not loaded. Please check the data setup.'
+            }), 503
+        
+        # Get request data
+        data = request.get_json()
+        if not data or 'address' not in data:
+            return jsonify({
+                'error': 'Invalid request',
+                'message': 'Please provide an address in the request body'
+            }), 400
+        
+        address_input = data['address']
+        if not address_input or not address_input.strip():
+            return jsonify({
+                'error': 'Empty address', 
+                'message': 'Please provide a valid address'
+            }), 400
+        
+        # Get Google Maps API key from environment  
+        google_maps_api_key = os.environ.get('GOOGLE_MAPS_API_KEY')
+        
+        # Parse and validate the address
+        parsed_address = watershed_service.parse_address_input(address_input)
+        validation_result = watershed_service.validate_and_suggest_address(parsed_address, google_maps_api_key)
+        
+        response_data = {
+            'input_address': address_input,
+            'parsed_address': parsed_address,
+            'validation': validation_result
+        }
+        
+        if validation_result["is_valid"]:
+            return jsonify({
+                'success': True,
+                'data': response_data
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'data': response_data,
+                'message': 'Address validation failed. Check suggestions for alternatives.'
+            }), 422
+    
+    except Exception as e:
+        logger.error(f"Error in address validation: {e}")
         return jsonify({
             'error': 'Internal server error',
             'message': 'An error occurred while processing your request'

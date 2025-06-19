@@ -6,6 +6,8 @@
     <title>Cascadia Watershed Lookup</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <!-- Google Maps API for Places Autocomplete -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&callback=initAutocomplete"></script>
 </head>
 <body>
     <div class="container">
@@ -17,20 +19,137 @@
         <main>
             <div class="search-section">
                 <form id="watershed-form" class="search-form">
-                    <div class="input-group">
-                        <label for="address">Enter your full street address:</label>
-                        <input 
-                            type="text" 
-                            id="address" 
-                            name="address" 
-                            placeholder="e.g., 123 Main Street, Seattle, WA"
-                            required
-                            autocomplete="street-address"
-                        >
-                        <button type="submit" id="search-btn">
-                            <span class="btn-text">Find My Watershed</span>
-                            <span class="btn-loading" style="display: none;">Searching...</span>
-                        </button>
+                    <div class="address-form">
+                        <!-- Address Input Mode Toggle -->
+                        <div class="form-row">
+                            <div class="input-mode-toggle">
+                                <label class="toggle-label">
+                                    <input type="radio" name="input-mode" value="single-line" checked>
+                                    <span>📝 Single Line Address</span>
+                                </label>
+                                <label class="toggle-label">
+                                    <input type="radio" name="input-mode" value="multi-line">
+                                    <span>📋 Multi-line Form</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Single Line Address Input -->
+                        <div id="single-line-mode" class="address-input-mode">
+                            <div class="form-row">
+                                <div class="input-group full-width">
+                                    <label for="single-line-address">Complete Address</label>
+                                    <textarea 
+                                        id="single-line-address" 
+                                        name="single-line-address" 
+                                        rows="3"
+                                        placeholder="Paste your complete address here:
+1620 Belmont Ave, Victoria, BC, Canada
+
+Or enter as single line:
+123 Main Street, Apt 4B, Seattle, WA 98101, USA"
+                                        class="address-textarea"
+                                    ></textarea>
+                                    <div class="input-help">
+                                        💡 You can paste an address from anywhere - we'll parse it automatically
+                                    </div>
+                                    {% if google_maps_api_key %}
+                                    <div class="google-autocomplete-hint">
+                                        Start typing for smart address suggestions powered by Google Maps
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Multi-line Form Mode -->
+                        <div id="multi-line-mode" class="address-input-mode" style="display: none;">
+                            <div class="form-row">
+                                <div class="input-group full-width">
+                                    <label for="address-line1">Street Address</label>
+                                    <input 
+                                        type="text" 
+                                        id="address-line1" 
+                                        name="address-line1" 
+                                        placeholder="123 Main Street"
+                                        autocomplete="address-line1"
+                                    >
+                                </div>
+                            </div>
+                        
+                        <div class="form-row">
+                            <div class="input-group full-width">
+                                <label for="address-line2">Apartment, Suite, etc. (optional)</label>
+                                <input 
+                                    type="text" 
+                                    id="address-line2" 
+                                    name="address-line2" 
+                                    placeholder="Apt 4B"
+                                    autocomplete="address-line2"
+                                >
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="city">City</label>
+                                <input 
+                                    type="text" 
+                                    id="city" 
+                                    name="city" 
+                                    placeholder="Seattle"
+                                    required
+                                    autocomplete="address-level2"
+                                >
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="state">State/Province</label>
+                                <input 
+                                    type="text" 
+                                    id="state" 
+                                    name="state" 
+                                    placeholder="WA"
+                                    required
+                                    autocomplete="address-level1"
+                                >
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="postal-code">Postal Code</label>
+                                <input 
+                                    type="text" 
+                                    id="postal-code" 
+                                    name="postal-code" 
+                                    placeholder="98101"
+                                    required
+                                    autocomplete="postal-code"
+                                >
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="country">Country</label>
+                                <select 
+                                    id="country" 
+                                    name="country" 
+                                    required
+                                    autocomplete="country"
+                                >
+                                    <option value="US">United States</option>
+                                    <option value="CA">Canada</option>
+                                </select>
+                            </div>
+                        </div>
+                        </div> <!-- End multi-line-mode -->
+                        
+                        <div class="form-row">
+                            <button type="submit" id="search-btn" class="submit-btn">
+                                <span class="btn-text">Find My Watershed</span>
+                                <span class="btn-loading" style="display: none;">Searching...</span>
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
